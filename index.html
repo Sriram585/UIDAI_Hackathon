@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aadhar Intelligence Suite</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <aside>
+        <div class="brand">NEXUS ANALYTICS</div>
+        <div class="nav-label">Live Signals</div>
+        
+        <div class="insight-card">
+            <h4>🚀 Trend Velocity</h4>
+            <p id="insight-trend">Calculating...</p>
+        </div>
+        <div class="insight-card">
+            <h4>⚔️ Competitive Gap</h4>
+            <p id="insight-comp">Analyzing leaders...</p>
+        </div>
+        
+        <button class="export-btn" onclick="alert('Exporting Report to CSV...')">⬇ Export Report</button>
+    </aside>
+
+    <main>
+        <header>
+            <div>
+                <h1>Executive Dashboard</h1>
+                <p class="subtitle">Multi-dimensional demographic analysis</p>
+            </div>
+            <div class="tag">Live Connection</div>
+        </header>
+
+        <div class="kpi-grid">
+            <div class="kpi-box">
+                <div class="kpi-label">Total Enrolments</div>
+                <div class="kpi-value" id="k-total">-</div>
+            </div>
+            <div class="kpi-box">
+                <div class="kpi-label">Monthly Growth</div>
+                <div class="kpi-value" id="k-growth">-</div>
+            </div>
+            <div class="kpi-box">
+                <div class="kpi-label">Top Zone</div>
+                <div class="kpi-value" id="k-top">-</div>
+            </div>
+            <div class="kpi-box">
+                <div class="kpi-label">Districts Active</div>
+                <div class="kpi-value" id="k-districts">-</div>
+            </div>
+        </div>
+
+        <div class="chart-section two-thirds">
+            <div class="chart-card">
+                <div class="card-header">
+                    <h3>🔮 Enrolment Forecast (AI Projection)</h3>
+                    <span class="tag">Linear Regression</span>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="forecastChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="card-header">
+                    <h3>🏆 Market Share (Top 5)</h3>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="polarChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-section half">
+            <div class="chart-card">
+                <div class="card-header">
+                    <h3>🕸️ State DNA Comparison</h3>
+                    <span class="tag">Demographic Split</span>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="card-header">
+                    <h3>⚠️ District Anomalies</h3>
+                    <span class="tag warning">Outliers > 2.0σ</span>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="anomalyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-section">
+            <div class="card-header">
+                <h3>📍 District Intelligence Grid (Top 20)</h3>
+            </div>
+            <div class="table-wrapper">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>State</th>
+                            <th>District</th>
+                            <th>0-5 Years</th>
+                            <th>5-17 Years</th>
+                            <th>18+ Years</th>
+                            <th>Total Volume</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
