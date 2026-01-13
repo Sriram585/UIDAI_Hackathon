@@ -53,13 +53,82 @@
             </div>
         </div>
 
+        <div class="insights-section">
+            <div class="section-header">
+                <h2>🧠 AI Strategic Intelligence</h2>
+                <span class="tag-ai">Visual Analytics</span>
+            </div>
+            
+            <div class="dashboard-grid">
+                <!-- A. PATTERNS: Scatter Plot (Child Ratio vs Total Volume) -->
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3>🧩 Pattern: Child Focus Areas</h3>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="patternChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- B. TRENDS: Multi-Line (Child Growth vs Adult Growth) -->
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3>📉 Trend: Segment Velocity</h3>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="trendDeepChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid" style="margin-top: 1.5rem;">
+                <!-- C. ANOMALIES: Bubble Chart (Size = Volume, Color = Severity) -->
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3>⚠️ Anomaly Map (Z-Score > 3)</h3>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="anomalyChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- D. PREDICTIONS: Line + Dashed Projection -->
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h3>🔮 Predictive Forecast (Next 3 Months)</h3>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="predictionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="chart-card full-width">
             <div class="card-header">
                 <h3>📉 Historical Enrolment Trend</h3>
-                <span class="nav-label">Last 12 Months</span>
             </div>
             <div class="canvas-container">
                 <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="chart-card">
+                <div class="card-header">
+                    <h3>📅 Age Group Trends (Monthly)</h3>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="ageTrendChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="card-header">
+                    <h3>👶 Child Enrolment Hotspots (0-5 Yrs)</h3>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="childHotspotChart"></canvas>
+                </div>
             </div>
         </div>
 
@@ -80,9 +149,27 @@
                     <canvas id="demographicsChart"></canvas>
                 </div>
             </div>
+            <div class="chart-card full-width">
+                <div class="card-header">
+                    <h3>🏛️ State vs Age Composition (Top 5)</h3>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="stateDemographicsChart"></canvas>
+                </div>
+            </div>
         </div>
 
-        <div class="table-section">
+        <div class="advice-section" style="margin-top: 2rem;">
+            <div class="section-header">
+                <h2>🚀 Executive Actions & Solution Frameworks</h2>
+                <span class="tag-ai" style="background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);">High Priority</span>
+            </div>
+            <div class="advice-grid" id="adviceContainer">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <div class="table-section" style="margin-top: 2rem;">
             <div class="card-header">
                 <h3>📍 District Intelligence Grid (Top 20)</h3>
             </div>

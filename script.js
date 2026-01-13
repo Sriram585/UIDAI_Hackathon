@@ -1,5 +1,5 @@
-Chart.defaults.color = '#94a3b8';
-Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+Chart.defaults.color = '#64748b'; // Slate-500
+Chart.defaults.borderColor = '#e2e8f0'; // Slate-200
 Chart.defaults.font.family = "'Inter', sans-serif";
 Chart.defaults.scale.grid.display = false;
 
@@ -11,9 +11,17 @@ async function init() {
 
     renderKPIs(data.kpis);
     renderTrend(data.trend);
+    renderAgeTrend(data.age_trend);
+    renderChildHotspots(data.child_hotspots);
+    renderStateDemographics(data.state_demographics);
     renderStates(data.states);
     renderDemographics(data.demographics);
     renderTable(data.table);
+
+    // Render AI Strategic Insights
+    if (data.user_insights) {
+        renderInsights(data.user_insights);
+    }
 
     // Insights
     const topState = data.states.labels[0] || "Unknown";
@@ -28,14 +36,16 @@ function renderKPIs(kpi) {
     document.getElementById('k-districts').innerText = kpi.districts;
 
     const growthEl = document.getElementById('k-growth');
-    growthEl.style.color = kpi.growth_rate >= 0 ? '#34d399' : '#f87171';
+    // Using green for positive, red for negative, but slightly darker for contrast
+    growthEl.style.color = kpi.growth_rate >= 0 ? '#16a34a' : '#dc2626';
 }
 
 function renderTrend(data) {
     const ctx = document.getElementById('trendChart').getContext('2d');
     const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-    gradient.addColorStop(0, 'rgba(99, 102, 241, 0.5)');
-    gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+    // Blue gradient for professional look
+    gradient.addColorStop(0, 'rgba(37, 99, 235, 0.2)'); // Blue-600 low opacity
+    gradient.addColorStop(1, 'rgba(37, 99, 235, 0)');
 
     new Chart(ctx, {
         type: 'line',
@@ -44,12 +54,15 @@ function renderTrend(data) {
             datasets: [{
                 label: 'Enrolments',
                 data: data.data,
-                borderColor: '#6366f1',
+                borderColor: '#2563eb', // Blue-600
                 backgroundColor: gradient,
                 fill: true,
                 tension: 0.4,
-                pointRadius: 4,
-                pointHoverRadius: 6
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                pointBackgroundColor: '#ffffff',
+                pointBorderColor: '#2563eb',
+                pointBorderWidth: 2
             }]
         },
         options: {
@@ -58,7 +71,78 @@ function renderTrend(data) {
             plugins: { legend: { display: false } },
             scales: {
                 x: { grid: { display: false } },
-                y: { grid: { color: 'rgba(255,255,255,0.05)' } }
+                y: { grid: { color: '#f1f5f9' }, beginAtZero: true } // Very light grid
+            }
+        }
+    });
+}
+
+function renderAgeTrend(data) {
+    new Chart(document.getElementById('ageTrendChart'), {
+        type: 'bar',
+        data: {
+            labels: data.labels,
+            datasets: [
+                { label: '0-5 Years', data: data.age_0_5, backgroundColor: '#2563eb', stack: 'Stack 0' },
+                { label: '5-17 Years', data: data.age_5_17, backgroundColor: '#6366f1', stack: 'Stack 0' },
+                { label: '18+ Years', data: data.age_18_plus, backgroundColor: '#0ea5e9', stack: 'Stack 0' }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+                x: { stacked: true, grid: { display: false } },
+                y: { stacked: true, grid: { color: '#f1f5f9' } }
+            }
+        }
+    });
+}
+
+function renderChildHotspots(data) {
+    new Chart(document.getElementById('childHotspotChart'), {
+        type: 'bar',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                label: 'Child Enrolments (0-5)',
+                data: data.data,
+                backgroundColor: '#ec4899', // Pink-500
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { color: '#f1f5f9' } },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+
+function renderStateDemographics(data) {
+    new Chart(document.getElementById('stateDemographicsChart'), {
+        type: 'bar',
+        data: {
+            labels: data.labels,
+            datasets: [
+                { label: '0-5 Years', data: data.age_0_5, backgroundColor: '#2563eb' },
+                { label: '5-17 Years', data: data.age_5_17, backgroundColor: '#6366f1' },
+                { label: '18+ Years', data: data.age_18_greater, backgroundColor: '#0ea5e9' }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { stacked: true, grid: { display: false } },
+                y: { stacked: true, grid: { color: '#f1f5f9' } }
             }
         }
     });
@@ -72,8 +156,9 @@ function renderStates(data) {
             datasets: [{
                 label: 'Total Enrolments',
                 data: data.data,
-                backgroundColor: '#a855f7',
-                borderRadius: 4
+                backgroundColor: '#3b82f6', // Blue-500
+                borderRadius: 4,
+                barThickness: 20
             }]
         },
         options: {
@@ -82,7 +167,7 @@ function renderStates(data) {
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-                x: { grid: { color: 'rgba(255,255,255,0.05)' } },
+                x: { grid: { color: '#f1f5f9' } },
                 y: { grid: { display: false } }
             }
         }
@@ -96,8 +181,10 @@ function renderDemographics(data) {
             labels: data.labels,
             datasets: [{
                 data: data.data,
-                backgroundColor: ['#6366f1', '#a855f7', '#ec4899'],
-                borderWidth: 0,
+                // Professional tricolor
+                backgroundColor: ['#2563eb', '#6366f1', '#0ea5e9'], // Blue, Indigo, Sky
+                borderWidth: 2,
+                borderColor: '#ffffff',
                 hoverOffset: 4
             }]
         },
@@ -105,9 +192,9 @@ function renderDemographics(data) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, font: { size: 11 } } }
             },
-            cutout: '70%'
+            cutout: '75%'
         }
     });
 }
@@ -116,12 +203,164 @@ function renderTable(rows) {
     const tbody = document.querySelector('#dataTable tbody');
     tbody.innerHTML = rows.map(r => `
         <tr>
-            <td style="color: #f1f5f9; font-weight: 500;">${r.state}</td>
-            <td style="color: #94a3b8;">${r.district}</td>
+            <td style="font-weight: 500; color: #1e293b;">${r.state}</td>
+            <td style="color: #64748b;">${r.district}</td>
             <td>${r.age_0_5.toLocaleString()}</td>
             <td>${r.age_5_17.toLocaleString()}</td>
             <td>${r.age_18_greater.toLocaleString()}</td>
-            <td style="color: #a855f7; font-weight: bold;">${r.total.toLocaleString()}</td>
+            <td style="color: #2563eb; font-weight: 600;">${r.total.toLocaleString()}</td>
         </tr>
+    `).join('');
+}
+
+
+function renderInsights(insights) {
+    renderPatternChart(insights.patterns);
+    renderDeepTrendChart(insights.trends);
+    renderAnomalyChart(insights.anomalies);
+    renderPredictionChart(insights.predictions);
+}
+
+function renderPatternChart(data) {
+    new Chart(document.getElementById('patternChart'), {
+        type: 'scatter',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function (ctx) {
+                            return `${ctx.raw.state}: ${ctx.raw.y}% Child Ratio (Vol: ${ctx.raw.x})`;
+                        }
+                    }
+                },
+                legend: { display: false }
+            },
+            scales: {
+                x: { title: { display: true, text: 'Total Enrolment Volume' }, type: 'logarithmic', grid: { display: false } },
+                y: { title: { display: true, text: 'Child Enrolment Ratio (%)' }, grid: { color: '#f1f5f9' } }
+            }
+        }
+    });
+}
+
+function renderDeepTrendChart(data) {
+    new Chart(document.getElementById('trendDeepChart'), {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: [
+                {
+                    label: 'Child Growth %',
+                    data: data.child_growth,
+                    borderColor: '#16a34a', // Green
+                    tension: 0.3,
+                    borderWidth: 2
+                },
+                {
+                    label: 'Adult Growth %',
+                    data: data.adult_growth,
+                    borderColor: '#94a3b8', // Slate
+                    borderDash: [5, 5],
+                    tension: 0.3,
+                    borderWidth: 2
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { grid: { display: false } },
+                y: { grid: { color: '#f1f5f9' }, title: { display: true, text: 'MoM Growth %' } }
+            }
+        }
+    });
+}
+
+function renderAnomalyChart(data) {
+    new Chart(document.getElementById('anomalyChart'), {
+        type: 'bubble',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function (ctx) {
+                            return `${ctx.raw.district}: Z-Score ${ctx.raw.y}`;
+                        }
+                    }
+                },
+                legend: { display: false }
+            },
+            scales: {
+                x: { type: 'category', grid: { display: false } }, // Dates as category
+                y: { title: { display: true, text: 'Deviation (Z-Score)' }, grid: { color: '#f1f5f9' } }
+            }
+        }
+    });
+}
+
+function renderPredictionChart(data) {
+    new Chart(document.getElementById('predictionChart'), {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: [
+                {
+                    label: 'Actual History',
+                    data: data.actual,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'AI Forecast',
+                    data: data.forecast,
+                    borderColor: '#9333ea', // Purple
+                    borderDash: [5, 5],
+                    pointStyle: 'rectRot',
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { grid: { display: false } },
+                y: { grid: { color: '#f1f5f9' } }
+            }
+        }
+    });
+}
+
+function renderAdvice(adviceList) {
+    const container = document.getElementById('adviceContainer');
+    container.innerHTML = adviceList.map(item => `
+        <div class="advice-card ${item.severity}">
+            <div class="advice-header">
+                <div class="advice-title">${item.title}</div>
+                <div class="severity-badge">${item.severity} Priority</div>
+            </div>
+            
+            <div class="finding-box">
+                <div class="finding-label">Observation</div>
+                <div class="finding-text">${item.finding}</div>
+            </div>
+            
+            <div class="finding-label">Implication</div>
+            <div class="impl-text">"${item.impl}"</div>
+            
+            <div class="action-box">
+                <div class="action-label">✅ Recommended Framework</div>
+                <div class="action-text">${item.action}</div>
+            </div>
+        </div>
     `).join('');
 }

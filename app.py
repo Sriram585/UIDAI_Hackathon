@@ -84,11 +84,165 @@ class AnalyticalEngine:
             "data": top_states.values.tolist()
         }
 
+    def get_age_trend(self):
+        """Monthly Trend by Age Group"""
+        monthly = self.df.resample('ME', on='date')[['age_0_5', 'age_5_17', 'age_18_greater']].sum()
+        return {
+            "labels": monthly.index.strftime('%b %Y').tolist(),
+            "age_0_5": monthly['age_0_5'].tolist(),
+            "age_5_17": monthly['age_5_17'].tolist(),
+            "age_18_plus": monthly['age_18_greater'].tolist()
+        }
+
+    def get_child_hotspots(self):
+        """Top 10 Districts for 0-5 Age Group"""
+        top = self.df.groupby(['state', 'district'])['age_0_5'].sum().reset_index()
+        top = top.sort_values('age_0_5', ascending=False).head(10)
+        return {
+            "labels": (top['district'] + ", " + top['state']).tolist(),
+            "data": top['age_0_5'].tolist()
+        }
+
+    def get_state_demographics(self):
+        """Demographic Split for Top 5 States"""
+        # Get Top 5 States by Total
+        top_states = self.df.groupby('state')['total'].sum().sort_values(ascending=False).head(5).index.tolist()
+        
+        # Filter data for these states
+        subset = self.df[self.df['state'].isin(top_states)]
+        grouped = subset.groupby('state')[['age_0_5', 'age_5_17', 'age_18_greater']].sum().reindex(top_states)
+        
+        return {
+            "labels": top_states,
+            "age_0_5": grouped['age_0_5'].tolist(),
+            "age_5_17": grouped['age_5_17'].tolist(),
+            "age_18_greater": grouped['age_18_greater'].tolist()
+        }
+
+    # --- ADVANCED INSIGHTS (VISUAL) ---
+
+    def get_patterns(self):
+        """A. Pattern Chart: Scatter (Child Ratio vs Total Volume)"""
+        states = self.df.groupby('state')[['age_0_5', 'total']].sum().reset_index()
+        states['child_ratio'] = (states['age_0_5'] / states['total']) * 100
+        
+        # Return format for Scatter Plot
+        # x: Total Volume (log scale implies size), y: Child Ratio
+        return {
+            "datasets": [{
+                "label": "States",
+                "data": [{"x": int(r['total']), "y": round(float(r['child_ratio']), 2), "state": str(r['state'])} for _, r in states.iterrows()]
+            }]
+        }
+
+    def get_deep_trends(self):
+        """B. Deep Trend Chart: Multi-Line (Monthly Growth % by Segment)"""
+        monthly = self.df.resample('ME', on='date')[['age_0_5', 'age_18_greater']].sum()
+        
+        # Calculate MoM Growth
+        pct_change = monthly.pct_change().fillna(0) * 100
+        
+        return {
+            "labels": monthly.index.strftime('%b %Y').tolist(),
+            "child_growth": pct_change['age_0_5'].round(1).tolist(),
+            "adult_growth": pct_change['age_18_greater'].round(1).tolist()
+        }
+
+    def get_refined_anomalies(self):
+        """C. Anomaly Chart: Bubble (x: Date, y: Z-Score, r: Volume)"""
+        daily = self.df.groupby(['date', 'district'])['total'].sum().reset_index()
+        daily['z'] = (daily['total'] - daily['total'].mean()) / daily['total'].std()
+        
+        # Filter for significant anomalies
+        outliers = daily[daily['z'].abs() > 2.5]
+        
+        return {
+            "datasets": [{
+                "label": "Anomalies",
+                "data": [{
+                    "x": r['date'].strftime('%Y-%m-%d'),
+                    "y": round(float(r['z']), 2),
+                    "r": min(int(r['total'] / 100), 20), # Scale radius
+                    "district": str(r['district'])
+                } for _, r in outliers.iterrows()]
+            }]
+        }
+
+    def get_predictive_indicators(self):
+        """D. Prediction Chart: Line (Actual) + Line (Forecast)"""
+        monthly = self.df.resample('ME', on='date')['total'].sum()
+        x = np.arange(len(monthly))
+        y = monthly.values
+        
+        # Fit Linear Model
+        z = np.polyfit(x, y, 1)
+        p = np.poly1d(z)
+        
+        # Forecast 3 months ahead
+        future_x = np.arange(len(monthly), len(monthly) + 3)
+        future_y = p(future_x)
+        
+        return {
+            "labels": monthly.index.strftime('%b %Y').tolist() + ["Next M1", "Next M2", "Next M3"],
+            "actual": [int(v) if not np.isnan(v) else None for v in y] + [None]*3,
+            "forecast": [None]*(len(y)-1) + [int(y[-1])] + [int(v) for v in future_y] # Connect last point
+        }
+
+    def get_actionable_advice(self):
+        """Generate Executive Recommendations based on findings"""
+        advice = []
+        
+        # 1. Analyze Saturation (Adult Trends)
+        monthly = self.df.resample('ME', on='date')[['age_18_greater', 'total']].sum()
+        if not monthly.empty:
+            last_month = monthly.iloc[-1]
+            adult_share = last_month['age_18_greater'] / last_month['total']
+            
+            if adult_share < 0.3:
+                advice.append({
+                    "title": "Saturation Reached",
+                    "severity": "high",
+                    "finding": f"Adult enrolments have dropped to {int(adult_share*100)}% of total volume.",
+                    "impl": "Adult population is saturated.",
+                    "action": "Shift 80% of marketing budget exclusively to 0-5 Child Enrolment campaigns."
+                })
+        
+        # 2. Analyze Fraud/Speed anomalies
+        daily = self.df.groupby(['date', 'district'])['total'].sum()
+        if not daily.empty:
+            max_daily = daily.max()
+            if max_daily > 1000: # Abnormally high for a single district/center
+                advice.append({
+                    "title": "Potential Velocity Fraud",
+                    "severity": "critical",
+                    "finding": f"District reported {int(max_daily)} enrolments in a single day (Statistical Improbability).",
+                    "impl": "Likelihood of batched fake entries or machine script injection.",
+                    "action": "Implement 'Speed Limit' Protocol: Auto-freeze operators exceeding 150/day pending bio-auth review."
+                })
+                
+        # 3. Child Gap Analysis
+        state_stats = self.df.groupby('state')[['age_0_5', 'total']].sum()
+        state_stats['child_ratio'] = state_stats['age_0_5'] / state_stats['total']
+        laggards = state_stats.sort_values('child_ratio').head(3)
+        
+        if not laggards.empty:
+            names = ", ".join(laggards.index.tolist())
+            advice.append({
+                "title": "Child Enrolment Lag",
+                "severity": "medium",
+                "finding": f"States ({names}) have critically low child update ratios.",
+                "impl": "Risk of missing birth rate targets in these regions.",
+                "action": "Deploy mobile enrolment vans to Anganwadis in these specific bottom-3 states."
+            })
+
+        return advice
+
     def get_table_data(self):
         """Raw Data for Table (Top 20 Districts)"""
         top = self.df.groupby(['state', 'district'])[['age_0_5', 'age_5_17', 'age_18_greater', 'total']].sum().reset_index()
         top = top.sort_values('total', ascending=False).head(20)
-        return top.to_dict(orient='records')
+        # Convert to native types
+        return top.astype(object).where(pd.notnull(top), None).to_dict(orient='records')
 
 engine = AnalyticalEngine()
 
@@ -102,6 +256,16 @@ def deep_analysis():
         "trend": engine.get_trend_data(),
         "demographics": engine.get_demographics(),
         "states": engine.get_state_performance(),
+        "age_trend": engine.get_age_trend(),
+        "child_hotspots": engine.get_child_hotspots(),
+        "state_demographics": engine.get_state_demographics(),
+        "user_insights": {
+            "patterns": engine.get_patterns(),
+            "trends": engine.get_deep_trends(),
+            "anomalies": engine.get_refined_anomalies(),
+            "predictions": engine.get_predictive_indicators()
+        },
+        "advice": engine.get_actionable_advice(),
         "table": engine.get_table_data()
     })
 
