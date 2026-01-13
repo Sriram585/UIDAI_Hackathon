@@ -1,6 +1,7 @@
 Chart.defaults.color = '#94a3b8';
 Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
 Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.scale.grid.display = false;
 
 document.addEventListener('DOMContentLoaded', init);
 
@@ -9,16 +10,15 @@ async function init() {
     const data = await res.json();
 
     renderKPIs(data.kpis);
-    renderForecast(data.forecast);
-    renderPolar(data.polar);
-    renderRadar(data.radar);
-    renderAnomalies(data.anomalies);
+    renderTrend(data.trend);
+    renderStates(data.states);
+    renderDemographics(data.demographics);
     renderTable(data.table);
 
-    // Auto-Generate Insights
-    const trend = data.forecast.slope > 0 ? "Positive Growth" : "Declining";
-    document.getElementById('insight-trend').innerText = trend;
-    document.getElementById('insight-comp').innerText = `${data.polar.labels[0]} leads market`;
+    // Insights
+    const topState = data.states.labels[0] || "Unknown";
+    document.getElementById('insight-trend').innerText = data.kpis.growth_rate >= 0 ? "Growth Upward" : "Steady Pace";
+    document.getElementById('insight-comp').innerText = `${topState} leads volume`;
 }
 
 function renderKPIs(kpi) {
@@ -27,57 +27,87 @@ function renderKPIs(kpi) {
     document.getElementById('k-top').innerText = kpi.top_state;
     document.getElementById('k-districts').innerText = kpi.districts;
 
-    // Dynamic Color
-    document.getElementById('k-growth').style.color = kpi.growth_rate >= 0 ? '#34d399' : '#f87171';
+    const growthEl = document.getElementById('k-growth');
+    growthEl.style.color = kpi.growth_rate >= 0 ? '#34d399' : '#f87171';
 }
 
-function renderForecast(data) {
-    if (!data.labels) return;
-    new Chart(document.getElementById('forecastChart'), {
+function renderTrend(data) {
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(99, 102, 241, 0.5)');
+    gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+
+    new Chart(ctx, {
         type: 'line',
         data: {
             labels: data.labels,
-            datasets: [
-                { label: 'Actual', data: data.actual, borderColor: '#818cf8', backgroundColor: 'rgba(129, 140, 248, 0.2)', fill: true, tension: 0.4 },
-                { label: 'Projection', data: data.projected, borderColor: '#f472b6', borderDash: [5, 5], pointRadius: 0 }
-            ]
+            datasets: [{
+                label: 'Enrolments',
+                data: data.data,
+                borderColor: '#6366f1',
+                backgroundColor: gradient,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
         },
-        options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } } } }
-    });
-}
-
-function renderPolar(data) {
-    new Chart(document.getElementById('polarChart'), {
-        type: 'polarArea',
-        data: {
-            labels: data.labels,
-            datasets: [{ data: data.values, backgroundColor: ['#818cf8', '#f472b6', '#34d399', '#facc15', '#fb7185'] }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-    });
-}
-
-function renderRadar(data) {
-    new Chart(document.getElementById('radarChart'), {
-        type: 'radar',
-        data: data,
         options: {
-            responsive: true, maintainAspectRatio: false,
-            elements: { line: { borderWidth: 3 } },
-            scales: { r: { grid: { color: 'rgba(255,255,255,0.1)' } } }
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false } },
+                y: { grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
         }
     });
 }
 
-function renderAnomalies(data) {
-    const points = data.values.map((v, i) => ({ x: i, y: v, d: data.districts[i] }));
-    new Chart(document.getElementById('anomalyChart'), {
-        type: 'scatter',
-        data: { datasets: [{ label: 'Outliers', data: points, backgroundColor: '#facc15' }] },
+function renderStates(data) {
+    new Chart(document.getElementById('statesChart'), {
+        type: 'bar',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                label: 'Total Enrolments',
+                data: data.data,
+                backgroundColor: '#a855f7',
+                borderRadius: 4
+            }]
+        },
         options: {
-            responsive: true, maintainAspectRatio: false,
-            scales: { x: { display: false } },
-            plugins: { tooltip: { callbacks: { label: c => `${c.raw.d}: ${c.raw.y.toLocaleString()}` } } }
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+function renderDemographics(data) {
+    new Chart(document.getElementById('demographicsChart'), {
+        type: 'doughnut',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                data: data.data,
+                backgroundColor: ['#6366f1', '#a855f7', '#ec4899'],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+            },
+            cutout: '70%'
         }
     });
 }
@@ -86,12 +116,12 @@ function renderTable(rows) {
     const tbody = document.querySelector('#dataTable tbody');
     tbody.innerHTML = rows.map(r => `
         <tr>
-            <td>${r.state}</td>
-            <td style="color:white; font-weight:bold;">${r.district}</td>
+            <td style="color: #f1f5f9; font-weight: 500;">${r.state}</td>
+            <td style="color: #94a3b8;">${r.district}</td>
             <td>${r.age_0_5.toLocaleString()}</td>
             <td>${r.age_5_17.toLocaleString()}</td>
             <td>${r.age_18_greater.toLocaleString()}</td>
-            <td style="color: #818cf8;">${r.total.toLocaleString()}</td>
+            <td style="color: #a855f7; font-weight: bold;">${r.total.toLocaleString()}</td>
         </tr>
     `).join('');
 }

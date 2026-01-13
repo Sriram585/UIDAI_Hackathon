@@ -14,12 +14,12 @@
         <div class="nav-label">Live Signals</div>
         
         <div class="insight-card">
-            <h4>🚀 Trend Velocity</h4>
-            <p id="insight-trend">Calculating...</p>
+            <h4>📈 Growth Pulse</h4>
+            <p id="insight-trend">Analyzing...</p>
         </div>
         <div class="insight-card">
-            <h4>⚔️ Competitive Gap</h4>
-            <p id="insight-comp">Analyzing leaders...</p>
+            <h4>🏆 Market Leader</h4>
+            <p id="insight-comp">Loading...</p>
         </div>
         
         <button class="export-btn" onclick="alert('Exporting Report to CSV...')">⬇ Export Report</button>
@@ -29,67 +29,55 @@
         <header>
             <div>
                 <h1>Executive Dashboard</h1>
-                <p class="subtitle">Multi-dimensional demographic analysis</p>
+                <p class="subtitle">Real-time enrolment & demographic intelligence</p>
             </div>
-            <div class="tag">Live Connection</div>
+            <div class="status-badge">Live System Active</div>
         </header>
 
         <div class="kpi-grid">
-            <div class="kpi-box">
+            <div class="kpi-card">
                 <div class="kpi-label">Total Enrolments</div>
                 <div class="kpi-value" id="k-total">-</div>
             </div>
-            <div class="kpi-box">
+            <div class="kpi-card">
                 <div class="kpi-label">Monthly Growth</div>
                 <div class="kpi-value" id="k-growth">-</div>
             </div>
-            <div class="kpi-box">
-                <div class="kpi-label">Top Zone</div>
+            <div class="kpi-card">
+                <div class="kpi-label">Top Performing State</div>
                 <div class="kpi-value" id="k-top">-</div>
             </div>
-            <div class="kpi-box">
-                <div class="kpi-label">Districts Active</div>
+            <div class="kpi-card">
+                <div class="kpi-label">Active Districts</div>
                 <div class="kpi-value" id="k-districts">-</div>
             </div>
         </div>
 
-        <div class="chart-section two-thirds">
-            <div class="chart-card">
-                <div class="card-header">
-                    <h3>🔮 Enrolment Forecast (AI Projection)</h3>
-                    <span class="tag">Linear Regression</span>
-                </div>
-                <div class="canvas-container">
-                    <canvas id="forecastChart"></canvas>
-                </div>
+        <div class="chart-card full-width">
+            <div class="card-header">
+                <h3>📉 Historical Enrolment Trend</h3>
+                <span class="nav-label">Last 12 Months</span>
             </div>
-            <div class="chart-card">
-                <div class="card-header">
-                    <h3>🏆 Market Share (Top 5)</h3>
-                </div>
-                <div class="canvas-container">
-                    <canvas id="polarChart"></canvas>
-                </div>
+            <div class="canvas-container">
+                <canvas id="trendChart"></canvas>
             </div>
         </div>
 
-        <div class="chart-section half">
+        <div class="dashboard-grid">
             <div class="chart-card">
                 <div class="card-header">
-                    <h3>🕸️ State DNA Comparison</h3>
-                    <span class="tag">Demographic Split</span>
+                    <h3>📊 State Leaderboard (Top 10)</h3>
                 </div>
                 <div class="canvas-container">
-                    <canvas id="radarChart"></canvas>
+                    <canvas id="statesChart"></canvas>
                 </div>
             </div>
             <div class="chart-card">
                 <div class="card-header">
-                    <h3>⚠️ District Anomalies</h3>
-                    <span class="tag warning">Outliers > 2.0σ</span>
+                    <h3>👥 Demographic Split</h3>
                 </div>
                 <div class="canvas-container">
-                    <canvas id="anomalyChart"></canvas>
+                    <canvas id="demographicsChart"></canvas>
                 </div>
             </div>
         </div>

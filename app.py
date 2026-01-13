@@ -36,7 +36,12 @@ class AnalyticalEngine:
             for c in cols: self.df[c] = pd.to_numeric(self.df[c], errors='coerce').fillna(0)
             
             self.df['total'] = self.df[cols].sum(axis=1)
-            self.df = self.df.dropna(subset=['date']).sort_values('date')
+            self.df = self.df.dropna(subset=['date'])
+            
+            # Filter out January (1) and February (2) as requested
+            self.df = self.df[~self.df['date'].dt.month.isin([1, 2])]
+            
+            self.df = self.df.sort_values('date')
         else:
             self.df = pd.DataFrame()
 
@@ -50,60 +55,33 @@ class AnalyticalEngine:
 
         return {
             "total": int(self.df['total'].sum()),
-            "districts": self.df['district'].nunique(),
-            "growth_rate": round(growth, 2),
-            "top_state": self.df.groupby('state')['total'].sum().idxmax()
+            "districts": int(self.df['district'].nunique()),
+            "growth_rate": float(round(growth, 2)),
+            "top_state": str(self.df.groupby('state')['total'].sum().idxmax())
         }
 
-    def get_forecast(self):
-        """Linear Regression Forecast"""
+    def get_trend_data(self):
+        """Historical Trend (No Predictions)"""
         monthly = self.df.resample('ME', on='date')['total'].sum().reset_index()
-        if len(monthly) < 2: return {}
-        
-        x = np.arange(len(monthly))
-        y = monthly['total'].values
-        z = np.polyfit(x, y, 1) # Slope and Intercept
-        p = np.poly1d(z)
-        
-        # Forecast 3 months ahead
-        future_x = np.arange(len(monthly), len(monthly) + 3)
-        future_y = p(future_x)
-        
-        labels = monthly['date'].dt.strftime('%b %Y').tolist() + ["Next Month", "Month +2", "Month +3"]
         return {
-            "labels": labels,
-            "actual": list(y) + [None]*3,
-            "projected": [None]*(len(y)-1) + [y[-1]] + list(future_y), # Connect lines
-            "slope": round(z[0], 2)
+            "labels": monthly['date'].dt.strftime('%b %Y').tolist(),
+            "data": monthly['total'].tolist()
         }
 
-    def get_radar_data(self):
-        """Comparative Analysis: Top 3 States vs Age Groups"""
-        top_states = self.df.groupby('state')['total'].sum().sort_values(ascending=False).head(3).index
-        result = {"labels": ["0-5 Years", "5-17 Years", "18+ Years"], "datasets": []}
-        
-        for state in top_states:
-            state_data = self.df[self.df['state'] == state][['age_0_5', 'age_5_17', 'age_18_greater']].sum()
-            result["datasets"].append({
-                "label": state,
-                "data": state_data.tolist()
-            })
-        return result
-
-    def get_polar_data(self):
-        """Market Share: Top 5 States"""
-        top = self.df.groupby('state')['total'].sum().sort_values(ascending=False).head(5)
-        return {"labels": top.index.tolist(), "values": top.values.tolist()}
-
-    def get_anomalies(self):
-        """Outlier Detection"""
-        stats = self.df.groupby(['state', 'district'])['total'].sum().reset_index()
-        stats['z'] = (stats['total'] - stats['total'].mean()) / stats['total'].std()
-        outliers = stats[stats['z'] > 2.0].head(15) # Top 15 anomalies
+    def get_demographics(self):
+        """Age Group Breakdown"""
+        data = self.df[['age_0_5', 'age_5_17', 'age_18_greater']].sum()
         return {
-            "districts": outliers['district'].tolist(),
-            "values": outliers['total'].tolist(),
-            "z_scores": outliers['z'].round(2).tolist()
+            "labels": ["0-5 Years", "5-17 Years", "18+ Years"],
+            "data": data.tolist()
+        }
+
+    def get_state_performance(self):
+        """Top 10 States"""
+        top_states = self.df.groupby('state')['total'].sum().sort_values(ascending=False).head(10)
+        return {
+            "labels": top_states.index.tolist(),
+            "data": top_states.values.tolist()
         }
 
     def get_table_data(self):
@@ -121,10 +99,9 @@ def index(): return render_template('index.html')
 def deep_analysis():
     return jsonify({
         "kpis": engine.get_kpis(),
-        "forecast": engine.get_forecast(),
-        "radar": engine.get_radar_data(),
-        "polar": engine.get_polar_data(),
-        "anomalies": engine.get_anomalies(),
+        "trend": engine.get_trend_data(),
+        "demographics": engine.get_demographics(),
+        "states": engine.get_state_performance(),
         "table": engine.get_table_data()
     })
 
