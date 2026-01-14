@@ -16,7 +16,7 @@ async function init() {
     renderStateDemographics(data.state_demographics);
     renderStates(data.states);
     renderDemographics(data.demographics);
-    renderTable(data.table);
+    renderMomentum(data.momentum);
 
     // Render AI Strategic Insights
     if (data.user_insights) {
@@ -27,6 +27,40 @@ async function init() {
     const topState = data.states.labels[0] || "Unknown";
     document.getElementById('insight-trend').innerText = data.kpis.growth_rate >= 0 ? "Growth Upward" : "Steady Pace";
     document.getElementById('insight-comp').innerText = `${topState} leads volume`;
+
+    if (data.advice) {
+        renderAdvice(data.advice);
+    }
+}
+
+function renderMomentum(data) {
+    const colors = data.data.map(val => val >= 0 ? '#22c55e' : '#ef4444'); // Green for positive, Red for negative
+
+    new Chart(document.getElementById('momentumChart'), {
+        type: 'bar',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                label: 'MoM Growth %',
+                data: data.data,
+                backgroundColor: colors,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: {
+                    grid: { color: '#f1f5f9' },
+                    title: { display: true, text: 'Month-over-Month Growth %' }
+                },
+                y: { grid: { display: false } }
+            }
+        }
+    });
 }
 
 function renderKPIs(kpi) {
@@ -199,19 +233,7 @@ function renderDemographics(data) {
     });
 }
 
-function renderTable(rows) {
-    const tbody = document.querySelector('#dataTable tbody');
-    tbody.innerHTML = rows.map(r => `
-        <tr>
-            <td style="font-weight: 500; color: #1e293b;">${r.state}</td>
-            <td style="color: #64748b;">${r.district}</td>
-            <td>${r.age_0_5.toLocaleString()}</td>
-            <td>${r.age_5_17.toLocaleString()}</td>
-            <td>${r.age_18_greater.toLocaleString()}</td>
-            <td style="color: #2563eb; font-weight: 600;">${r.total.toLocaleString()}</td>
-        </tr>
-    `).join('');
-}
+
 
 
 function renderInsights(insights) {

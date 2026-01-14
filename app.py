@@ -31,6 +31,9 @@ class AnalyticalEngine:
             self.df = pd.concat(frames, ignore_index=True)
             self.df['date'] = pd.to_datetime(self.df['date'], errors='coerce')
             
+            # Clean State Names (remove whitespace)
+            self.df['state'] = self.df['state'].astype(str).str.strip() 
+
             # Numeric Cleaning
             cols = ['age_0_5', 'age_5_17', 'age_18_greater']
             for c in cols: self.df[c] = pd.to_numeric(self.df[c], errors='coerce').fillna(0)
@@ -237,12 +240,38 @@ class AnalyticalEngine:
 
         return advice
 
-    def get_table_data(self):
-        """Raw Data for Table (Top 20 Districts)"""
-        top = self.df.groupby(['state', 'district'])[['age_0_5', 'age_5_17', 'age_18_greater', 'total']].sum().reset_index()
-        top = top.sort_values('total', ascending=False).head(20)
-        # Convert to native types
-        return top.astype(object).where(pd.notnull(top), None).to_dict(orient='records')
+    def get_growth_momentum(self):
+        """Analyze State-wise Momentum (Accelerators vs Decelerators)"""
+        # Get data for last 2 months per state
+        monthly_state = self.df.groupby(['state', pd.Grouper(key='date', freq='ME')])['total'].sum().reset_index()
+        
+        # We need at least 2 filtered months to calc growth
+        if monthly_state['date'].nunique() < 2:
+            return {"labels": [], "data": []}
+            
+        last_month = monthly_state['date'].max()
+        prev_month = last_month - pd.DateOffset(months=1)
+        
+        curr_data = monthly_state[monthly_state['date'] == last_month].set_index('state')['total']
+        prev_data = monthly_state[monthly_state['date'].dt.month == prev_month.month].set_index('state')['total']
+        
+        # Calculate Growth % (Handle division by zero)
+        momentum = ((curr_data - prev_data) / prev_data * 100).fillna(0)
+        
+        # Sort and take top/bottom
+        momentum = momentum.sort_values(ascending=False)
+        
+        # Take Top 5 (Accelerators) and Bottom 5 (Decelerators)
+        top_5 = momentum.head(5)
+        bot_5 = momentum.tail(5)
+        
+        merged = pd.concat([top_5, bot_5])
+        
+        # Ensure labels are strings
+        return {
+            "labels": [str(x) for x in merged.index.tolist()],
+            "data": merged.values.round(1).tolist()
+        }
 
 engine = AnalyticalEngine()
 
@@ -266,7 +295,7 @@ def deep_analysis():
             "predictions": engine.get_predictive_indicators()
         },
         "advice": engine.get_actionable_advice(),
-        "table": engine.get_table_data()
+        "momentum": engine.get_growth_momentum()
     })
 
 if __name__ == '__main__':
