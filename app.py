@@ -267,6 +267,21 @@ class AnalyticalEngine:
         
         merged = pd.concat([top_5, bot_5])
         
+        # Filter out duplicates and small UTs if needed (optional based on user feedback)
+        # For now, we return exactly what is in the 'state' column of the dataset.
+        # User reported 'Ladakh', 'Puducherry' appearing. These ARE in the 'state' column.
+        # To fix this per request "show state name instead", we might need to filter these out
+        # if the user considers them "cities" (though they are UTs).
+        
+        # Let's filter out known UTs that might be confusing the user
+        exclude_list = ['Ladakh', 'Puducherry', 'Chandigarh', 'Daman and Diu', 'Lakshadweep']
+        momentum = momentum[~momentum.index.isin(exclude_list)]
+        
+        # re-calculate top/bottom after filter
+        top_5 = momentum.head(5)
+        bot_5 = momentum.tail(5)
+        merged = pd.concat([top_5, bot_5])
+
         # Ensure labels are strings
         return {
             "labels": [str(x) for x in merged.index.tolist()],

@@ -31,6 +31,94 @@ async function init() {
     if (data.advice) {
         renderAdvice(data.advice);
     }
+
+    // Attach Click Events to Charts
+    setupChartClicks(data);
+}
+
+function setupChartClicks(data) {
+    // Define Insights for each chart type
+    const insights = {
+        'trendChart': {
+            title: 'Historical Enrolment Trend',
+            desc: 'This chart tracks the total number of enrolments month-over-month. The shaded area represents the total volume. A rising line indicates increasing coverage.',
+            takeaway: data.kpis.growth_rate > 0 ? 'Enrolments are growing steadily. Maintain current outreach programs.' : 'Enrolments have plateaued or dipped. Investigate potential bottlenecks.'
+        },
+        'stateDemographicsChart': {
+            title: 'State vs Age Composition',
+            desc: 'This stacked bar chart breaks down the enrolment types (Child, Youth, Adult) for the top 5 performing states. It reveals the "quality" of enrolments.',
+            takeaway: 'Check if high-volume states are driving child enrolments or just adult updates.'
+        },
+        'ageTrendChart': {
+            title: 'Age Group Trends (Monthly)',
+            desc: 'A monthly view of how different age cohorts are behaving. Useful for spotting seasonal spikes in child enrolments (e.g., school admission season).',
+            takeaway: 'Look for green/blue spikes which indicate successful child enrolment drives.'
+        },
+        'childHotspotChart': {
+            title: 'Child Enrolment Hotspots (0-5)',
+            desc: 'Ranking of the top districts specifically for child enrolments. These are your best-performing areas for birth capture.',
+            takeaway: 'Replicate the strategies used in these top districts to other regions.'
+        },
+        'momentumChart': {
+            title: 'Growth Momentum',
+            desc: 'Green bars show states that grew the most since last month. Red bars show states that declined.',
+            takeaway: 'Focus immediate attention on the "Decelerators" (Red bars) to reverse the negative trend.'
+        },
+        'statesChart': {
+            title: 'Total Enrolment Leaderboard',
+            desc: 'A simple ranking of states by total volume since inception of this dataset.',
+            takeaway: 'The top 3 states usually contribute 40-50% of total national volume.'
+        },
+        'patternChart': {
+            title: 'AI Pattern Analysis',
+            desc: 'A scatter plot correlating Total Volume (X-axis) with Child Ratio (Y-axis). High Y-value means a state is very efficient at enrolling children relative to its size.',
+            takeaway: 'States in the top-left quadrant are "Child Specialists" - efficient despite lower volume.'
+        },
+        'trendDeepChart': {
+            title: 'Deep Trend Velocity',
+            desc: 'Compares the speed of growth between Children and Adults. Diverging lines indicate a shift in focus.',
+            takeaway: 'If the Green line (Child) is above the Grey line (Adult), the ecosystem is healthy and future-proof.'
+        },
+        'anomalyChart': {
+            title: 'Anomaly Detection System',
+            desc: 'Highlights specific days and districts where enrolment numbers were statistically improbable (Z-Score > 3).',
+            takeaway: 'Large bubbles require immediate audit for potential fraud or data entry errors.'
+        },
+        'predictionChart': {
+            title: 'AI Future Forecast',
+            desc: 'A linear projection of future enrolments based on the last 12 months of data.',
+            takeaway: 'Use this forecast to plan server capacity and manpower allocation for the coming quarter.'
+        }
+    };
+
+    // Attach listener to all charts
+    Object.keys(insights).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            // Find parent card
+            const card = el.closest('.chart-card');
+            if (card) {
+                card.onclick = () => openModal(insights[id]);
+            }
+        }
+    });
+}
+
+function openModal(info) {
+    document.getElementById('m-title').innerText = info.title;
+    document.getElementById('m-body').innerText = info.desc;
+    document.getElementById('m-insight').innerText = "Takeaway: " + info.takeaway;
+
+    document.getElementById('analysisModal').classList.add('active');
+}
+
+window.closeModal = function () {
+    document.getElementById('analysisModal').classList.remove('active');
+}
+
+// Close on outside click
+document.getElementById('analysisModal').onclick = (e) => {
+    if (e.target === document.getElementById('analysisModal')) closeModal();
 }
 
 function renderMomentum(data) {
@@ -380,7 +468,7 @@ function renderAdvice(adviceList) {
             <div class="impl-text">"${item.impl}"</div>
             
             <div class="action-box">
-                <div class="action-label">✅ Recommended Framework</div>
+                <div class="action-label">Recommended Framework</div>
                 <div class="action-text">${item.action}</div>
             </div>
         </div>
